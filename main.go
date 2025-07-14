@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type WeatherResponse struct {
@@ -39,6 +40,18 @@ func getWeatherIcon(weatherType string) string {
 	return "0"
 }
 
+func waitForInternet() {
+	timeout := time.Now().Add(30 * time.Second)
+	for time.Now().Before(timeout) {
+		_, err := http.Get("http://clients3.google.com/generate_204")
+		if err == nil {
+			return
+		}
+		time.Sleep(2 * time.Second)
+	}
+	log.Println("Warning: Internet connection not available after 30 seconds")
+}
+
 func loadEnv(path string) map[string]string {
 	// file, err := os.Open(path)
 	file, err := os.Open("/home/kaiser/.config/waybar/modules/.env")
@@ -66,6 +79,7 @@ func loadEnv(path string) map[string]string {
 }
 
 func main() {
+	waitForInternet()
 	env := loadEnv(".env")
 	BASE_URL := "http://api.openweathermap.org/data/2.5/weather"
 	API_KEY := env["API_KEY"]
