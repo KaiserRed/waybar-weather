@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 type WeatherResponse struct {
@@ -40,17 +39,38 @@ func getWeatherIcon(weatherType string) string {
 	return "0"
 }
 
-func main() {
-
-	err := godotenv.Load(".env")
+func loadEnv(path string) map[string]string {
+	// file, err := os.Open(path)
+	file, err := os.Open("/home/kaiser/.config/waybar/modules/.env")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error oppening .env", err)
 	}
-	BASE_URL := os.Getenv("BASE_URL")
-	API_KEY := os.Getenv("API_KEY")
-	var city string
-	city = "Moscow"
-	Search_Url := fmt.Sprintf("%s?q=%s&appid=%s&units=metric", BASE_URL, city, API_KEY)
+	defer file.Close()
+
+	env := make(map[string]string)
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) == 2 {
+			key := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+			env[key] = value
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatalf("Error reading %v", err)
+	}
+	return env
+}
+
+func main() {
+	env := loadEnv(".env")
+	BASE_URL := "http://api.openweathermap.org/data/2.5/weather"
+	API_KEY := env["API_KEY"]
+	city := env["CITY"]
+	Search_Url := fmt.Sprintf("%v?q=%s&appid=%s&units=metric", BASE_URL, city, API_KEY)
 	response, err := http.Get(Search_Url)
 	if err != nil {
 		log.Fatal(err)
