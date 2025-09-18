@@ -22,6 +22,9 @@ type WeatherResponse struct {
 		FeelsLike float64 `json:"feels_like"`
 		Humidity  int     `json:"humidity"`
 	} `json:"main"`
+	Wind struct {
+		Speed float64 `json:"speed"`
+	}
 	Name string `json:"name"`
 }
 
@@ -102,15 +105,15 @@ func main() {
 	if err := json.Unmarshal(weatherBytes, &weather); err != nil {
 		log.Fatal(err)
 	}
-
 	output := map[string]interface{}{
 		"text": fmt.Sprintf("%s %.1f°C", getWeatherIcon(weather.Weather[0].Main), weather.Main.Temp),
-		"tooltip": fmt.Sprintf("%s: %s\nТемпература: %.1f°C\nОщущается как: %.1f°C\nВлажность: %d%%",
+		"tooltip": fmt.Sprintf("%s: %s\nТемпература: %.1f°C\nОщущается как: %.1f°C\nВлажность: %d%%\nВетер: %.1f",
 			weather.Name,
 			weather.Weather[0].Description,
 			weather.Main.Temp,
 			weather.Main.FeelsLike,
-			weather.Main.Humidity),
+			weather.Main.Humidity,
+			weather.Wind.Speed),
 		"alt":   weather.Weather[0].Main,
 		"class": strings.ToLower(weather.Weather[0].Main),
 	}
